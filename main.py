@@ -61,5 +61,26 @@ def get_hh_vacancies(
     return all_vacancies
 
 
-vac = get_hh_vacancies(dev_params)
-print(len(vac))
+def search_language(lang, vacancies):
+    counter = 0
+    for vacancy in vacancies:
+        if vacancy['snippet']['requirement']:
+            if lang in vacancy['snippet']['requirement']:
+                counter += 1
+    return counter
+
+
+def get_lang_entry_in_vacancies(
+        vacancies,
+        languages=popular_program_languages
+):
+    entries = dict()
+    for lang in languages:
+        count = search_language(lang, vacancies)
+        entries[lang] = count
+    return entries
+
+
+vacancies = get_hh_vacancies(dev_params)
+cnt = get_lang_entry_in_vacancies(vacancies)
+print(cnt)
