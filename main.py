@@ -159,5 +159,25 @@ def get_sj_vacancies(
     #professions = [vacancy['profession'] for vacancy in response['objects'] if vacancy['profession']]
     return vacancies
 
-print(get_sj_vacancies())
+
+def predict_rub_salaries_sj(vacancies):
+    salary_predictions = []
+    for vacancy in vacancies:
+        if vacancy['currency'] != 'rub':
+            salary_predictions.append(None)
+        elif vacancy['payment_from'] == 0 and vacancy['payment_to'] > 0:
+            salary_predictions.append(vacancy['payment_to']*0.8)
+        elif vacancy['payment_from'] > 0 and vacancy['payment_to'] == 0:
+            salary_predictions.append(vacancy['payment_from'] * 1.2)
+        elif vacancy['payment_from'] > 0 and vacancy['payment_to'] > 0:
+            salary_predictions.append((vacancy['payment_from'] + vacancy['payment_to']) * 0.5)
+        else:
+            salary_predictions.append(None)
+
+    return salary_predictions
+
+
+vacancies = get_sj_vacancies()
+salary_predictions = predict_rub_salaries_sj(vacancies)
+print(salary_predictions)
 #print(professions)
