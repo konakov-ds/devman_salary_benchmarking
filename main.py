@@ -61,13 +61,15 @@ def get_hh_vacancies(
     return all_vacancies
 
 
-def search_language(lang, vacancies):
+def get_info_for_language(lang, vacancies):
     counter = 0
+    salaries = []
     for vacancy in vacancies:
         if vacancy['snippet']['requirement']:
             if lang in vacancy['snippet']['requirement']:
                 counter += 1
-    return counter
+                salaries.append(vacancy['salary'])
+    return counter, salaries
 
 
 def get_lang_entry_in_vacancies(
@@ -76,11 +78,32 @@ def get_lang_entry_in_vacancies(
 ):
     entries = dict()
     for lang in languages:
-        count = search_language(lang, vacancies)
+        count, _ = get_info_for_language(lang, vacancies)
         entries[lang] = count
     return entries
 
 
+def predict_rub_salary(salaries):
+    salary_predictions = []
+    for salary in salaries:
+        if salary:
+            if salary['currency'] != 'RUR':
+                salary_predictions.append(None)
+            elif not salary['from'] and salary['to']:
+                salary_predictions.append(salary['to']*0.8)
+            elif not salary['to'] and salary['from']:
+                salary_predictions.append(salary['from'] * 1.2)
+            else:
+                salary_predictions.append((salary['from'] + salary['to']) * 0.5)
+        else:
+            salary_predictions.append(None)
+
+    return salary_predictions
+
+
 vacancies = get_hh_vacancies(dev_params)
-cnt = get_lang_entry_in_vacancies(vacancies)
-print(cnt)
+#cnt = get_lang_entry_in_vacancies(vacancies)
+counter, salary = get_info_for_language(popular_program_languages[-2], vacancies)
+print(predict_rub_salary(salary))
+# print(counter, len(salary))
+#print(salary)
