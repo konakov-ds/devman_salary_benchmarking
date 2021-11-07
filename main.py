@@ -1,6 +1,7 @@
 import requests
 from dotenv import load_dotenv
 import os
+import time
 
 load_dotenv()
 sj_api_key = os.getenv('SJ_SECRET_KEY')
@@ -109,7 +110,7 @@ def predict_rub_salaries_hh(salaries):
 def get_average_salaries_hh(vacancies, popular_program_languages):
     average_salaries = dict()
     for lang in popular_program_languages:
-        count_vacancies, salaries = get_info_for_language(lang, vacancies)
+        count_vacancies, salaries = get_info_for_hh_vacancies(lang, vacancies)
         salary_predictions = predict_rub_salaries_hh(salaries)
         salary_predictions_clean = [pred for pred in salary_predictions if pred]
         num_salaries = len(salary_predictions_clean)
@@ -138,7 +139,8 @@ sj_api_url = 'https://api.superjob.ru/2.0/vacancies/'
 
 sj_params = {
     'town': 4,
-    'catalogues': 48
+    'catalogues': 48,
+    'count': 100,
 }
 
 sj_header = {
@@ -152,12 +154,26 @@ def get_sj_vacancies(
         url=sj_api_url,
         header=sj_header,
 ):
+    all_vacancies = []
+    for page in range(500):
+        sj_params['page'] = page
+        response = requests.get(sj_api_url, headers=sj_header, params=sj_params)
+        response.raise_for_status()
+        vacancies = response.json()['objects']
+        all_vacancies.append(vacancies)
 
-    response = requests.get(sj_api_url, headers=sj_header, params=sj_params)
-    response.raise_for_status()
-    vacancies = response.json()['objects']
-    #professions = [vacancy['profession'] for vacancy in response['objects'] if vacancy['profession']]
-    return vacancies
+    all_vacancies = [vacancy for sub in all_vacancies for vacancy in sub]
+
+    return all_vacancies
+
+
+def get_sj_vacancies_for_language(language, vacancies):
+    vacancies_for_language = []
+    for vacancy in vacancies:
+        if vacancy['profession']:
+            if language in vacancy['profession']:
+                vacancies_for_language.append(vacancy)
+    return vacancies_for_language
 
 
 def predict_rub_salaries_sj(vacancies):
@@ -177,7 +193,29 @@ def predict_rub_salaries_sj(vacancies):
     return salary_predictions
 
 
+def get_average_salaries_sj(vacancies, popular_program_languages):
+    average_salaries = dict()
+    for lang in popular_program_languages:
+        vacancies_for_language = get_sj_vacancies_for_language(lang, vacancies)
+        count_vacancies = len(vacancies_for_language)
+        salary_predictions = predict_rub_salaries_sj(vacancies_for_language)
+        salary_predictions_clean = [pred for pred in salary_predictions if pred]
+        num_salaries = len(salary_predictions_clean)
+        if num_salaries == 0:
+            mean_salary = None
+        else:
+            mean_salary = int(sum(salary_predictions_clean)/num_salaries)
+        salary_wrapper = {
+            'vacancies_found': count_vacancies,
+            'vacancies_processed': num_salaries,
+            'average_salary': mean_salary
+        }
+        average_salaries[lang] = salary_wrapper
+
+    return average_salaries
+
+
 vacancies = get_sj_vacancies()
-salary_predictions = predict_rub_salaries_sj(vacancies)
-print(salary_predictions)
-#print(professions)
+#print(vacancies)
+#print([vac['profession'] for vac in vacancies])
+print(get_average_salaries_sj(vacancies, popular_program_languages))
