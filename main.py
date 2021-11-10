@@ -37,13 +37,13 @@ def get_hh_vacancies(
 
 def get_hh_salaries_for_language(lang):
     salaries = []
-    vacancies = get_hh_vacancies(search_text=lang)
+    vacancies = get_hh_vacancies(lang)
     for vacancy in vacancies:
         salaries.append(vacancy['salary'])
     return salaries
 
 
-def salary_condition(
+def get_salary_prediction(
         api,
         salary
 ):
@@ -57,23 +57,24 @@ def salary_condition(
         from_stamp = 'payment_from',
         to_stamp = 'payment_to'
 
-    if salary['currency'] != currency_lang:
+    if salary.get('currency') != currency_lang:
         return
-    elif not salary[from_stamp] and not salary[to_stamp]:
+    elif not salary.get(from_stamp) and not salary.get(to_stamp):
         return
-    elif not salary[from_stamp] and salary[to_stamp]:
-        return salary[to_stamp] * 0.8
-    elif not salary[to_stamp] and salary[from_stamp]:
-        return salary[from_stamp] * 1.2
+    elif not salary.get(from_stamp) and salary.get(to_stamp):
+        return salary.get(to_stamp) * 0.8
+    elif not salary.get(to_stamp) and salary.get(from_stamp):
+        return salary.get(from_stamp) * 1.2
     else:
-        return (salary[from_stamp] + salary[to_stamp]) * 0.5
+        return (salary.get(from_stamp) + salary.get(to_stamp)) * 0.5
 
 
 def predict_rub_salaries_hh(salaries):
     salary_predictions = []
     for salary in salaries:
         if salary:
-            salary_predictions.append(salary_condition('hh', salary))
+            prediction = get_salary_prediction('hh', salary)
+            salary_predictions.append(prediction)
         else:
             salary_predictions.append(None)
 
@@ -88,7 +89,7 @@ def get_average_salaries_hh(popular_program_languages):
         salary_predictions_clean = [pred for pred in salary_predictions if pred]
         count_vacancies = len(salaries)
         num_salaries = len(salary_predictions_clean)
-        if num_salaries == 0:
+        if not num_salaries:
             mean_salary = None
         else:
             mean_salary = int(sum(salary_predictions_clean)/num_salaries)
@@ -132,7 +133,8 @@ def get_sj_vacancies(
 def predict_rub_salaries_sj(vacancies):
     salary_predictions = []
     for vacancy in vacancies:
-        salary_predictions.append(salary_condition('sj', vacancy))
+        prediction = get_salary_prediction('sj', vacancy)
+        salary_predictions.append(prediction)
 
     return salary_predictions
 
@@ -145,7 +147,7 @@ def get_average_salaries_sj(api_key, popular_program_languages):
         salary_predictions = predict_rub_salaries_sj(vacancies_for_language)
         salary_predictions_clean = [pred for pred in salary_predictions if pred]
         num_salaries = len(salary_predictions_clean)
-        if num_salaries == 0:
+        if not num_salaries:
             mean_salary = None
         else:
             mean_salary = int(sum(salary_predictions_clean)/num_salaries)
@@ -159,7 +161,7 @@ def get_average_salaries_sj(api_key, popular_program_languages):
     return average_salaries
 
 
-def print_salaries(salaries, title=None):
+def get_salaries_table(salaries, title=None):
     column_names = [
         'Язык программирования',
         'Вакансий найдено',
@@ -167,12 +169,12 @@ def print_salaries(salaries, title=None):
         'Средняя зарплата'
     ]
     table_data = [
-        [language] + list(salaries[language].values()) for language in salaries
+        [key] + list(value.values()) for key, value in salaries.items()
     ]
     table_data.insert(0, column_names)
     table = AsciiTable(table_data, title=title)
 
-    print(table.table)
+    return table.table
 
 
 if __name__ == '__main__':
@@ -196,8 +198,8 @@ if __name__ == '__main__':
         'JavaScript'
     ]
 
-    #hh_salaries = get_average_salaries_hh(popular_program_languages)
+    hh_salaries = get_average_salaries_hh(popular_program_languages)
     sj_salaries = get_average_salaries_sj(sj_api_key, popular_program_languages)
 
-    #print_salaries(hh_salaries, 'HeadHunter Moscow')
-    print_salaries(sj_salaries, 'SuperJob Moscow')
+    print(get_salaries_table(hh_salaries, 'HeadHunter Moscow'))
+    print(get_salaries_table(sj_salaries, 'SuperJob Moscow'))
