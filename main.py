@@ -5,22 +5,23 @@ from terminaltables import AsciiTable
 
 
 def get_hh_vacancies(
+        search_text,
         url='https://api.hh.ru/vacancies/',
         user_agent='salary_benchmarking_app/1.2 konakov-dev@yandex.ru',
-        specialization='1.221',
         area='1',
         per_page=100,
 ):
-    amount_pages = 100
+
     header = {
         'User-Agent': user_agent
     }
-    params = {
-        'specialization': specialization,
-        'area': area,
-        'per_page': per_page
-    }
     all_vacancies = []
+    params = {
+        'area': area,
+        'per_page': per_page,
+        'text': search_text.lower()
+    }
+    amount_pages = 100
     while amount_pages:
         response = requests.get(url, headers=header, params=params)
         response.raise_for_status()
@@ -34,12 +35,11 @@ def get_hh_vacancies(
     return all_vacancies
 
 
-def get_hh_vacancies_for_language(lang, vacancies):
+def get_hh_salaries_for_language(lang):
     salaries = []
+    vacancies = get_hh_vacancies(search_text=lang)
     for vacancy in vacancies:
-        if vacancy['snippet']['requirement']:
-            if lang in vacancy['snippet']['requirement']:
-                salaries.append(vacancy['salary'])
+        salaries.append(vacancy['salary'])
     return salaries
 
 
@@ -61,10 +61,10 @@ def predict_rub_salaries_hh(salaries):
     return salary_predictions
 
 
-def get_average_salaries_hh(vacancies, popular_program_languages):
+def get_average_salaries_hh(popular_program_languages):
     average_salaries = dict()
     for lang in popular_program_languages:
-        salaries = get_hh_vacancies_for_language(lang, vacancies)
+        salaries = get_hh_salaries_for_language(lang)
         salary_predictions = predict_rub_salaries_hh(salaries)
         salary_predictions_clean = [pred for pred in salary_predictions if pred]
         count_vacancies = len(salaries)
@@ -197,11 +197,11 @@ if __name__ == '__main__':
         'JavaScript'
     ]
 
-    sj_vacancies = get_sj_vacancies(api_key=sj_api_key)
-    hh_vacancies = get_hh_vacancies()
+    #sj_vacancies = get_sj_vacancies(api_key=sj_api_key)
+    #hh_vacancies = get_hh_vacancies(search_text=popular_program_languages)
 
-    hh_salaries = get_average_salaries_hh(hh_vacancies, popular_program_languages)
-    sj_salaries = get_average_salaries_sj(sj_vacancies, popular_program_languages)
+    hh_salaries = get_average_salaries_hh(popular_program_languages)
+    #sj_salaries = get_average_salaries_sj(sj_vacancies, popular_program_languages)
 
     print_salaries(hh_salaries, 'HeadHunter Moscow')
-    print_salaries(sj_salaries, 'SuperJob Moscow')
+    #print_salaries(sj_salaries, 'SuperJob Moscow')
