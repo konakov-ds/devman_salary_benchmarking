@@ -4,24 +4,6 @@ from dotenv import load_dotenv
 from terminaltables import AsciiTable
 
 
-popular_program_languages = [
-    'TypeScript',
-    'Swift',
-    'Scala',
-    'Objective-C',
-    'Shell',
-    'Go',
-    'C',
-    'C#',
-    'C++',
-    'PHP',
-    'Ruby',
-    'Python',
-    'Java',
-    'JavaScript'
-]
-
-
 def get_hh_amount_pages(
         params,
         url,
@@ -185,6 +167,23 @@ def print_salaries(salaries, title=None):
 
 if __name__ == '__main__':
     load_dotenv()
+
+    popular_program_languages = [
+        'TypeScript',
+        'Swift',
+        'Scala',
+        'Objective-C',
+        'Shell',
+        'Go',
+        'C',
+        'C#',
+        'C++',
+        'PHP',
+        'Ruby',
+        'Python',
+        'Java',
+        'JavaScript'
+    ]
     # SuperJob params for request
     sj_api_url = 'https://api.superjob.ru/2.0/vacancies/'
     sj_api_key = os.getenv('SJ_SECRET_KEY')
