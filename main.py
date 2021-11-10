@@ -5,11 +5,21 @@ from terminaltables import AsciiTable
 
 
 def get_hh_vacancies(
-        params,
-        url,
-        header,
+        url='https://api.hh.ru/vacancies/',
+        user_agent='salary_benchmarking_app/1.2 konakov-dev@yandex.ru',
+        specialization='1.221',
+        area='1',
+        per_page=100,
 ):
     amount_pages = 100
+    header = {
+        'User-Agent': user_agent
+    }
+    params = {
+        'specialization': specialization,
+        'area': area,
+        'per_page': per_page
+    }
     all_vacancies = []
     while amount_pages:
         response = requests.get(url, headers=header, params=params)
@@ -74,13 +84,24 @@ def get_average_salaries_hh(vacancies, popular_program_languages):
 
 
 def get_sj_vacancies(
-        params,
-        url,
-        header,
+        api_key,
+        url='https://api.superjob.ru/2.0/vacancies/',
+        town=4,
+        catalogues=48,
+        count_vacancies_per_page=100,
 ):
     all_vacancies = []
+    header = {
+        'X-Api-App-Id': api_key,
+        'Content-Type': 'application/json',
+    }
+    params = {
+        'town': town,
+        'catalogues': catalogues,
+        'count': count_vacancies_per_page,
+    }
     for page in range(10):  # Поставил 10, тк апи выдает нули на большем количестве
-        sj_params['page'] = page
+        params['page'] = page
         response = requests.get(url, headers=header, params=params)
         response.raise_for_status()
         vacancies = response.json()['objects']
@@ -157,6 +178,7 @@ def print_salaries(salaries, title=None):
 
 if __name__ == '__main__':
     load_dotenv()
+    sj_api_key = os.getenv('SJ_SECRET_KEY')
 
     popular_program_languages = [
         'TypeScript',
@@ -174,33 +196,9 @@ if __name__ == '__main__':
         'Java',
         'JavaScript'
     ]
-    # SuperJob params for request
-    sj_api_url = 'https://api.superjob.ru/2.0/vacancies/'
-    sj_api_key = os.getenv('SJ_SECRET_KEY')
-    sj_params = {
-        'town': 4,
-        'catalogues': 48,
-        'count': 100,
-    }
-    sj_header = {
-        'X-Api-App-Id': sj_api_key,
-        'Content-Type': 'application/json',
-    }
 
-    # HeadHunter params for request
-    hh_api_url = 'https://api.hh.ru/vacancies/'
-    hh_params = {
-        'specialization': '1.221',
-        'area': '1',
-        'per_page': '100',
-    }
-
-    hh_header = {
-        'User-Agent': 'salary_benchmarking_app/1.2 konakov-dev@yandex.ru'
-    }
-
-    sj_vacancies = get_sj_vacancies(sj_params, sj_api_url, sj_header)
-    hh_vacancies = get_hh_vacancies(hh_params, hh_api_url, hh_header)
+    sj_vacancies = get_sj_vacancies(api_key=sj_api_key)
+    hh_vacancies = get_hh_vacancies()
 
     hh_salaries = get_average_salaries_hh(hh_vacancies, popular_program_languages)
     sj_salaries = get_average_salaries_sj(sj_vacancies, popular_program_languages)
