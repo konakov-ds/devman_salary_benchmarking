@@ -85,9 +85,9 @@ def get_average_salaries_hh(popular_program_languages):
 
 def get_sj_vacancies(
         api_key,
+        search_text,
         url='https://api.superjob.ru/2.0/vacancies/',
         town=4,
-        catalogues=48,
         count_vacancies_per_page=100,
 ):
     all_vacancies = []
@@ -97,7 +97,7 @@ def get_sj_vacancies(
     }
     params = {
         'town': town,
-        'catalogues': catalogues,
+        'keyword': search_text,
         'count': count_vacancies_per_page,
     }
     for page in range(10):  # Поставил 10, тк апи выдает нули на большем количестве
@@ -105,9 +105,7 @@ def get_sj_vacancies(
         response = requests.get(url, headers=header, params=params)
         response.raise_for_status()
         vacancies = response.json()['objects']
-        all_vacancies.append(vacancies)
-
-    all_vacancies = [vacancy for sub in all_vacancies for vacancy in sub]
+        all_vacancies.extend(vacancies)
 
     return all_vacancies
 
@@ -138,10 +136,10 @@ def predict_rub_salaries_sj(vacancies):
     return salary_predictions
 
 
-def get_average_salaries_sj(vacancies, popular_program_languages):
+def get_average_salaries_sj(api_key, popular_program_languages):
     average_salaries = dict()
     for lang in popular_program_languages:
-        vacancies_for_language = get_sj_vacancies_for_language(lang, vacancies)
+        vacancies_for_language = get_sj_vacancies(api_key, lang)
         count_vacancies = len(vacancies_for_language)
         salary_predictions = predict_rub_salaries_sj(vacancies_for_language)
         salary_predictions_clean = [pred for pred in salary_predictions if pred]
@@ -197,11 +195,8 @@ if __name__ == '__main__':
         'JavaScript'
     ]
 
-    #sj_vacancies = get_sj_vacancies(api_key=sj_api_key)
-    #hh_vacancies = get_hh_vacancies(search_text=popular_program_languages)
+    #hh_salaries = get_average_salaries_hh(popular_program_languages)
+    sj_salaries = get_average_salaries_sj(sj_api_key, popular_program_languages)
 
-    hh_salaries = get_average_salaries_hh(popular_program_languages)
-    #sj_salaries = get_average_salaries_sj(sj_vacancies, popular_program_languages)
-
-    print_salaries(hh_salaries, 'HeadHunter Moscow')
-    #print_salaries(sj_salaries, 'SuperJob Moscow')
+    #print_salaries(hh_salaries, 'HeadHunter Moscow')
+    print_salaries(sj_salaries, 'SuperJob Moscow')
