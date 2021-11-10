@@ -4,33 +4,23 @@ from dotenv import load_dotenv
 from terminaltables import AsciiTable
 
 
-def get_hh_amount_pages(
-        params,
-        url,
-        header,
-
-
-):
-    response = requests.get(url, headers=header, params=params)
-    response.raise_for_status()
-    amount_pages = int(response.json()['pages'])
-    return amount_pages
-
-
 def get_hh_vacancies(
         params,
         url,
         header,
 ):
-    amount_pages = get_hh_amount_pages(params, url, header)
+    amount_pages = 100
     all_vacancies = []
-    for page in range(amount_pages):
+    while amount_pages:
         response = requests.get(url, headers=header, params=params)
         response.raise_for_status()
+        if amount_pages == 100:
+            amount_pages = int(response.json()['pages'])
         vacancies = response.json()['items']
-        all_vacancies.append(vacancies)
+        all_vacancies.extend(vacancies)
+        amount_pages -= 1
+        params['page'] = amount_pages
 
-    all_vacancies = [vacancy for sub in all_vacancies for vacancy in sub]
     return all_vacancies
 
 
@@ -206,7 +196,7 @@ if __name__ == '__main__':
     }
 
     hh_header = {
-        'User-Agent': 'salary_benchmarking_app/1.1 konakov-dev@yandex.ru'
+        'User-Agent': 'salary_benchmarking_app/1.2 konakov-dev@yandex.ru'
     }
 
     sj_vacancies = get_sj_vacancies(sj_params, sj_api_url, sj_header)
