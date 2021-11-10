@@ -43,18 +43,37 @@ def get_hh_salaries_for_language(lang):
     return salaries
 
 
+def salary_condition(
+        api,
+        salary
+):
+    assert api in ('hh', 'sj'), 'Значение api должно быть hh либо sj'
+    if api == 'hh':
+        currency_lang = 'RUR'
+        from_stamp = 'from',
+        to_stamp = 'to'
+    else:
+        currency_lang = 'rub'
+        from_stamp = 'payment_from',
+        to_stamp = 'payment_to'
+
+    if salary['currency'] != currency_lang:
+        return
+    elif not salary[from_stamp] and not salary[to_stamp]:
+        return
+    elif not salary[from_stamp] and salary[to_stamp]:
+        return salary[to_stamp] * 0.8
+    elif not salary[to_stamp] and salary[from_stamp]:
+        return salary[from_stamp] * 1.2
+    else:
+        return (salary[from_stamp] + salary[to_stamp]) * 0.5
+
+
 def predict_rub_salaries_hh(salaries):
     salary_predictions = []
     for salary in salaries:
         if salary:
-            if salary['currency'] != 'RUR':
-                salary_predictions.append(None)
-            elif not salary['from'] and salary['to']:
-                salary_predictions.append(salary['to']*0.8)
-            elif not salary['to'] and salary['from']:
-                salary_predictions.append(salary['from'] * 1.2)
-            else:
-                salary_predictions.append((salary['from'] + salary['to']) * 0.5)
+            salary_predictions.append(salary_condition('hh', salary))
         else:
             salary_predictions.append(None)
 
@@ -110,28 +129,10 @@ def get_sj_vacancies(
     return all_vacancies
 
 
-def get_sj_vacancies_for_language(language, vacancies):
-    vacancies_for_language = []
-    for vacancy in vacancies:
-        if vacancy['profession']:
-            if language in vacancy['profession']:
-                vacancies_for_language.append(vacancy)
-    return vacancies_for_language
-
-
 def predict_rub_salaries_sj(vacancies):
     salary_predictions = []
     for vacancy in vacancies:
-        if vacancy['currency'] != 'rub':
-            salary_predictions.append(None)
-        elif vacancy['payment_from'] == 0 and vacancy['payment_to'] > 0:
-            salary_predictions.append(vacancy['payment_to']*0.8)
-        elif vacancy['payment_from'] > 0 and vacancy['payment_to'] == 0:
-            salary_predictions.append(vacancy['payment_from'] * 1.2)
-        elif vacancy['payment_from'] > 0 and vacancy['payment_to'] > 0:
-            salary_predictions.append((vacancy['payment_from'] + vacancy['payment_to']) * 0.5)
-        else:
-            salary_predictions.append(None)
+        salary_predictions.append(salary_condition('sj', vacancy))
 
     return salary_predictions
 
