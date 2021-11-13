@@ -176,7 +176,7 @@ def get_salaries_table(salaries, title=None):
         'Средняя зарплата'
     ]
     table_data = [
-        [key] + list(value.values()) for key, value in salaries.items()
+        [language] + list(salary_wrapper.values()) for language, salary_wrapper in salaries.items()
     ]
     table_data.insert(0, column_names)
     table = AsciiTable(table_data, title=title)
