@@ -76,8 +76,6 @@ def predict_rub_salaries_hh(salaries):
                 salary=salary
             )
             salary_predictions.append(prediction)
-        else:
-            salary_predictions.append(None)
 
     return salary_predictions
 
@@ -87,12 +85,11 @@ def get_average_salaries_hh(popular_program_languages):
     for lang in popular_program_languages:
         salaries, vacancies_found = get_hh_salaries_for_language(lang)
         salary_predictions = predict_rub_salaries_hh(salaries)
-        salary_predictions_clean = [pred for pred in salary_predictions if pred]
-        num_salaries = len(salary_predictions_clean)
+        num_salaries = len(salary_predictions)
         if not num_salaries:
             mean_salary = None
         else:
-            mean_salary = int(sum(salary_predictions_clean)/num_salaries)
+            mean_salary = int(sum(salary_predictions)/num_salaries)
         salary_wrapper = {
             'vacancies_found': vacancies_found,
             'vacancies_processed': num_salaries,
