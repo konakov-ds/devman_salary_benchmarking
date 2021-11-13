@@ -21,16 +21,17 @@ def get_hh_vacancies(
         'per_page': per_page,
         'text': search_text.lower()
     }
-    amount_pages = 100
-    while amount_pages:
+    page_counter = float('inf')
+    while page_counter:
         response = requests.get(url, headers=header, params=params)
         response.raise_for_status()
-        if amount_pages == 100:
-            amount_pages = int(response.json()['pages'])
-        vacancies = response.json()['items']
+        response = response.json()
+        if page_counter == float('inf'):
+            page_counter = int(response['pages'])
+        vacancies = response['items']
         all_vacancies.extend(vacancies)
-        amount_pages -= 1
-        params['page'] = amount_pages
+        page_counter -= 1
+        params['page'] = page_counter
 
     return all_vacancies
 
@@ -199,7 +200,7 @@ if __name__ == '__main__':
     ]
 
     hh_salaries = get_average_salaries_hh(popular_program_languages)
-    sj_salaries = get_average_salaries_sj(sj_api_key, popular_program_languages)
+    #sj_salaries = get_average_salaries_sj(sj_api_key, popular_program_languages)
 
     print(get_salaries_table(hh_salaries, 'HeadHunter Moscow'))
-    print(get_salaries_table(sj_salaries, 'SuperJob Moscow'))
+    #print(get_salaries_table(sj_salaries, 'SuperJob Moscow'))
