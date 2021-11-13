@@ -29,20 +29,21 @@ def get_hh_vacancies(
         response = response.json()
         if page_counter == float('inf'):
             page_counter = int(response['pages'])
+            vacancies_found = response['found']
         vacancies = response['items']
         all_vacancies.extend(vacancies)
         page_counter -= 1
         params['page'] = page_counter
 
-    return all_vacancies
+    return all_vacancies, vacancies_found
 
 
 def get_hh_salaries_for_language(lang):
     salaries = []
-    vacancies = get_hh_vacancies(lang)
+    vacancies, vacancies_found = get_hh_vacancies(lang)
     for vacancy in vacancies:
         salaries.append(vacancy['salary'])
-    return salaries
+    return salaries, vacancies_found
 
 
 def get_salary_prediction(
@@ -84,17 +85,16 @@ def predict_rub_salaries_hh(salaries):
 def get_average_salaries_hh(popular_program_languages):
     average_salaries = dict()
     for lang in popular_program_languages:
-        salaries = get_hh_salaries_for_language(lang)
+        salaries, vacancies_found = get_hh_salaries_for_language(lang)
         salary_predictions = predict_rub_salaries_hh(salaries)
         salary_predictions_clean = [pred for pred in salary_predictions if pred]
-        count_vacancies = len(salaries)
         num_salaries = len(salary_predictions_clean)
         if not num_salaries:
             mean_salary = None
         else:
             mean_salary = int(sum(salary_predictions_clean)/num_salaries)
         salary_wrapper = {
-            'vacancies_found': count_vacancies,
+            'vacancies_found': vacancies_found,
             'vacancies_processed': num_salaries,
             'average_salary': mean_salary
         }
@@ -130,8 +130,10 @@ def get_sj_vacancies(
         vacancies = response['objects']
         all_vacancies.extend(vacancies)
         more = response['more']
+        if not more:
+            vacancies_found = response['total']
         page += 1
-    return all_vacancies
+    return all_vacancies, vacancies_found
 
 
 def predict_rub_salaries_sj(vacancies):
@@ -151,8 +153,7 @@ def predict_rub_salaries_sj(vacancies):
 def get_average_salaries_sj(api_key, popular_program_languages):
     average_salaries = dict()
     for lang in popular_program_languages:
-        vacancies_for_language = get_sj_vacancies(api_key, lang)
-        count_vacancies = len(vacancies_for_language)
+        vacancies_for_language, vacancies_found = get_sj_vacancies(api_key, lang)
         salary_predictions = predict_rub_salaries_sj(vacancies_for_language)
         salary_predictions_clean = [pred for pred in salary_predictions if pred]
         num_salaries = len(salary_predictions_clean)
@@ -161,7 +162,7 @@ def get_average_salaries_sj(api_key, popular_program_languages):
         else:
             mean_salary = int(sum(salary_predictions_clean)/num_salaries)
         salary_wrapper = {
-            'vacancies_found': count_vacancies,
+            'vacancies_found': vacancies_found,
             'vacancies_processed': num_salaries,
             'average_salary': mean_salary
         }
