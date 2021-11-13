@@ -1,3 +1,4 @@
+import itertools
 import os
 import requests
 from dotenv import load_dotenv
@@ -45,18 +46,11 @@ def get_hh_salaries_for_language(lang):
 
 
 def get_salary_prediction(
-        api,
+        from_stamp,
+        to_stamp,
+        currency_lang,
         salary
 ):
-    assert api in ('hh', 'sj'), 'Значение api должно быть hh либо sj'
-    if api == 'hh':
-        currency_lang = 'RUR'
-        from_stamp = 'from',
-        to_stamp = 'to'
-    else:
-        currency_lang = 'rub'
-        from_stamp = 'payment_from',
-        to_stamp = 'payment_to'
 
     if salary.get('currency') != currency_lang:
         return
@@ -74,7 +68,12 @@ def predict_rub_salaries_hh(salaries):
     salary_predictions = []
     for salary in salaries:
         if salary:
-            prediction = get_salary_prediction('hh', salary)
+            prediction = get_salary_prediction(
+                from_stamp='from',
+                to_stamp='to',
+                currency_lang='RUR',
+                salary=salary
+            )
             salary_predictions.append(prediction)
         else:
             salary_predictions.append(None)
@@ -121,20 +120,29 @@ def get_sj_vacancies(
         'keyword': search_text,
         'count': count_vacancies_per_page,
     }
-    for page in range(10):  # Поставил 10, тк апи выдает нули на большем количестве
+    more = True
+    page = 0
+    while more:
         params['page'] = page
         response = requests.get(url, headers=header, params=params)
         response.raise_for_status()
-        vacancies = response.json()['objects']
+        response = response.json()
+        vacancies = response['objects']
         all_vacancies.extend(vacancies)
-
+        more = response['more']
+        page += 1
     return all_vacancies
 
 
 def predict_rub_salaries_sj(vacancies):
     salary_predictions = []
     for vacancy in vacancies:
-        prediction = get_salary_prediction('sj', vacancy)
+        prediction = get_salary_prediction(
+            from_stamp='payment_from',
+            to_stamp='payment_to',
+            currency_lang='rub',
+            salary=vacancy
+        )
         salary_predictions.append(prediction)
 
     return salary_predictions
@@ -199,8 +207,8 @@ if __name__ == '__main__':
         'JavaScript'
     ]
 
-    hh_salaries = get_average_salaries_hh(popular_program_languages)
-    #sj_salaries = get_average_salaries_sj(sj_api_key, popular_program_languages)
+    #hh_salaries = get_average_salaries_hh(popular_program_languages)
+    sj_salaries = get_average_salaries_sj(sj_api_key, popular_program_languages)
 
-    print(get_salaries_table(hh_salaries, 'HeadHunter Moscow'))
-    #print(get_salaries_table(sj_salaries, 'SuperJob Moscow'))
+    #print(get_salaries_table(hh_salaries, 'HeadHunter Moscow'))
+    print(get_salaries_table(sj_salaries, 'SuperJob Moscow'))
