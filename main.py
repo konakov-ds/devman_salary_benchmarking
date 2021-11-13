@@ -77,7 +77,7 @@ def predict_rub_salaries_hh(salaries):
             )
             salary_predictions.append(prediction)
 
-    return salary_predictions
+    return [pred for pred in salary_predictions if pred]
 
 
 def get_average_salaries_hh(popular_program_languages):
@@ -175,11 +175,11 @@ def get_salaries_table(salaries, title=None):
         'Вакансий обработано',
         'Средняя зарплата'
     ]
-    table_data = [
+    table = [
         [language] + list(salary_wrapper.values()) for language, salary_wrapper in salaries.items()
     ]
-    table_data.insert(0, column_names)
-    table = AsciiTable(table_data, title=title)
+    table.insert(0, column_names)
+    table = AsciiTable(table, title=title)
 
     return table.table
 
@@ -205,8 +205,8 @@ if __name__ == '__main__':
         'JavaScript'
     ]
 
-    #hh_salaries = get_average_salaries_hh(popular_program_languages)
+    hh_salaries = get_average_salaries_hh(popular_program_languages)
     sj_salaries = get_average_salaries_sj(sj_api_key, popular_program_languages)
 
-    #print(get_salaries_table(hh_salaries, 'HeadHunter Moscow'))
+    print(get_salaries_table(hh_salaries, 'HeadHunter Moscow'))
     print(get_salaries_table(sj_salaries, 'SuperJob Moscow'))
