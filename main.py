@@ -1,6 +1,6 @@
-from itertools import count
 import os
 import requests
+from itertools import count
 from dotenv import load_dotenv
 from terminaltables import AsciiTable
 
