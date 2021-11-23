@@ -1,3 +1,4 @@
+from itertools import count
 import os
 import requests
 from dotenv import load_dotenv
@@ -7,7 +8,7 @@ from terminaltables import AsciiTable
 def get_hh_vacancies(
         search_text,
         url='https://api.hh.ru/vacancies/',
-        user_agent='salary_benchmarking_app/1.2 konakov-dev@yandex.ru',
+        user_agent='salary_benchmarking_app/1.3 konakov-dev@yandex.ru',
         area='1',
         per_page=100,
 ):
@@ -21,20 +22,16 @@ def get_hh_vacancies(
         'per_page': per_page,
         'text': search_text.lower()
     }
-    page_counter = float('inf')
-    while page_counter:
+    for page_number in count(1):
         response = requests.get(url, headers=header, params=params)
         response.raise_for_status()
-        response = response.json()
-        if page_counter == float('inf'):
-            page_counter = int(response['pages'])
-            vacancies_found = response['found']
-        vacancies = response['items']
+        response_extraction = response.json()
+        vacancies = response_extraction['items']
         all_vacancies.extend(vacancies)
-        page_counter -= 1
-        params['page'] = page_counter
-
-    return all_vacancies, vacancies_found
+        params['page'] = page_number
+        if page_number > int(response_extraction['pages']) - 1:
+            vacancies_found = response_extraction['found']
+            return all_vacancies, vacancies_found
 
 
 def get_hh_salaries_for_language(lang):
@@ -116,20 +113,17 @@ def get_sj_vacancies(
         'keyword': search_text,
         'count': count_vacancies_per_page,
     }
-    more = True
-    page = 0
-    while more:
-        params['page'] = page
+
+    for page_number in count(0):
+        params['page'] = page_number
         response = requests.get(url, headers=header, params=params)
         response.raise_for_status()
-        response = response.json()
-        vacancies = response['objects']
+        response_extraction = response.json()
+        vacancies = response_extraction['objects']
         all_vacancies.extend(vacancies)
-        more = response['more']
-        if not more:
-            vacancies_found = response['total']
-        page += 1
-    return all_vacancies, vacancies_found
+        if not response_extraction['more']:
+            vacancies_found = response_extraction['total']
+            return all_vacancies, vacancies_found
 
 
 def predict_rub_salaries_sj(vacancies):
