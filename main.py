@@ -26,8 +26,7 @@ def get_hh_vacancies(
         response = requests.get(url, headers=header, params=params)
         response.raise_for_status()
         response_extraction = response.json()
-        vacancies = response_extraction['items']
-        all_vacancies.extend(vacancies)
+        all_vacancies.extend(response_extraction['items'])
         params['page'] = page_number
         if page_number > int(response_extraction['pages']) - 1:
             vacancies_found = response_extraction['found']
@@ -86,12 +85,11 @@ def get_average_salaries_hh(popular_program_languages):
             mean_salary = None
         else:
             mean_salary = int(sum(salary_predictions)/num_salaries)
-        salary_wrapper = {
+        average_salaries[lang] = {
             'vacancies_found': vacancies_found,
             'vacancies_processed': num_salaries,
             'average_salary': mean_salary
         }
-        average_salaries[lang] = salary_wrapper
 
     return average_salaries
 
@@ -119,8 +117,7 @@ def get_sj_vacancies(
         response = requests.get(url, headers=header, params=params)
         response.raise_for_status()
         response_extraction = response.json()
-        vacancies = response_extraction['objects']
-        all_vacancies.extend(vacancies)
+        all_vacancies.extend(response_extraction['objects'])
         if not response_extraction['more']:
             vacancies_found = response_extraction['total']
             return all_vacancies, vacancies_found
