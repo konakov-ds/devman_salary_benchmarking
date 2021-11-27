@@ -77,7 +77,7 @@ def get_average_salaries_hh(popular_program_languages):
         if not num_salaries:
             mean_salary = None
         else:
-            mean_salary = int(sum(salary_predictions)/num_salaries)
+            mean_salary = int(sum(salary_predictions) / num_salaries)
         average_salaries[lang] = {
             'vacancies_found': vacancies_found,
             'vacancies_processed': num_salaries,
@@ -132,14 +132,20 @@ def predict_rub_salaries_sj(vacancies):
 def get_average_salaries_sj(api_key, popular_program_languages):
     average_salaries = dict()
     for lang in popular_program_languages:
-        vacancies_for_language, vacancies_found = get_sj_vacancies(api_key, lang)
-        salary_predictions = predict_rub_salaries_sj(vacancies_for_language)
-        salary_predictions_clean = [pred for pred in salary_predictions if pred]
+        vacancies_for_language, vacancies_found = get_sj_vacancies(
+            api_key, lang
+        )
+        salary_predictions = predict_rub_salaries_sj(
+            vacancies_for_language
+        )
+        salary_predictions_clean = [
+            pred for pred in salary_predictions if pred
+        ]
         num_salaries = len(salary_predictions_clean)
         if not num_salaries:
             mean_salary = None
         else:
-            mean_salary = int(sum(salary_predictions_clean)/num_salaries)
+            mean_salary = int(sum(salary_predictions_clean) / num_salaries)
         salary_wrapper = {
             'vacancies_found': vacancies_found,
             'vacancies_processed': num_salaries,
@@ -158,7 +164,8 @@ def get_salaries_table(salaries, title=None):
         'Средняя зарплата'
     ]
     table = [
-        [language] + list(salary_wrapper.values()) for language, salary_wrapper in salaries.items()
+        [language] + list(salary_wrapper.values())
+        for language, salary_wrapper in salaries.items()
     ]
     table.insert(0, column_names)
     table = AsciiTable(table, title=title)
@@ -187,8 +194,13 @@ if __name__ == '__main__':
         'JavaScript'
     ]
 
-    hh_salaries = get_average_salaries_hh(popular_program_languages)
-    sj_salaries = get_average_salaries_sj(sj_api_key, popular_program_languages)
+    hh_salaries = get_average_salaries_hh(
+        popular_program_languages
+    )
+    sj_salaries = get_average_salaries_sj(
+        sj_api_key,
+        popular_program_languages
+    )
 
     print(get_salaries_table(hh_salaries, 'HeadHunter Moscow'))
     print(get_salaries_table(sj_salaries, 'SuperJob Moscow'))
