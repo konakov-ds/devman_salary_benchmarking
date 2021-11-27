@@ -42,33 +42,26 @@ def get_hh_salaries_for_language(lang):
 
 
 def get_salary_prediction(
-        from_stamp,
-        to_stamp,
-        currency_lang,
-        salary
+        salary_from,
+        salary_to,
 ):
-
-    if salary.get('currency') != currency_lang:
+    if not salary_from and not salary_to:
         return
-    elif not salary.get(from_stamp) and not salary.get(to_stamp):
-        return
-    elif not salary.get(from_stamp) and salary.get(to_stamp):
-        return salary.get(to_stamp) * 0.8
-    elif not salary.get(to_stamp) and salary.get(from_stamp):
-        return salary.get(from_stamp) * 1.2
+    elif not salary_from and salary_to:
+        return salary_to * 0.8
+    elif not salary_to and salary_from:
+        return salary_from * 1.2
     else:
-        return (salary.get(from_stamp) + salary.get(to_stamp)) * 0.5
+        return (salary_from + salary_to) * 0.5
 
 
 def predict_rub_salaries_hh(salaries):
     salary_predictions = []
     for salary in salaries:
-        if salary:
+        if salary and salary.get('currency') == 'RUR':
             prediction = get_salary_prediction(
-                from_stamp='from',
-                to_stamp='to',
-                currency_lang='RUR',
-                salary=salary
+                salary['from'],
+                salary['to']
             )
             salary_predictions.append(prediction)
 
@@ -126,13 +119,12 @@ def get_sj_vacancies(
 def predict_rub_salaries_sj(vacancies):
     salary_predictions = []
     for vacancy in vacancies:
-        prediction = get_salary_prediction(
-            from_stamp='payment_from',
-            to_stamp='payment_to',
-            currency_lang='rub',
-            salary=vacancy
-        )
-        salary_predictions.append(prediction)
+        if vacancy.get('currency') == 'rub':
+            prediction = get_salary_prediction(
+                vacancy['payment_from'],
+                vacancy['payment_to'],
+            )
+            salary_predictions.append(prediction)
 
     return salary_predictions
 
